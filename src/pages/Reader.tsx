@@ -28,10 +28,7 @@ export default function ReaderPage() {
   const [isThemeOpen, setIsThemeOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const themeMenuRef = useRef<HTMLDivElement>(null);
-  const touchStartX = useRef<number | null>(null);
-  const touchStartY = useRef<number | null>(null);
-  const touchEndX = useRef<number | null>(null);
-  const touchEndY = useRef<number | null>(null);
+  const lastTouchDistance = useRef<number | null>(null);
   const lastWheelTime = useRef<number>(0);
   const { theme, setTheme } = useTheme();
 
@@ -94,56 +91,41 @@ export default function ReaderPage() {
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
-  // Swipe and Trackpad Gestures
-  const minSwipeDistance = 50;
-
+  // Pinch to Zoom for Mobile
   const onTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.targetTouches[0].clientX;
-    touchStartY.current = e.targetTouches[0].clientY;
+    if (e.targetTouches.length === 2) {
+      const distance = Math.hypot(
+        e.targetTouches[0].clientX - e.targetTouches[1].clientX,
+        e.targetTouches[0].clientY - e.targetTouches[1].clientY
+      );
+      lastTouchDistance.current = distance;
+    }
   };
 
   const onTouchMove = (e: React.TouchEvent) => {
-    touchEndX.current = e.targetTouches[0].clientX;
-    touchEndY.current = e.targetTouches[0].clientY;
+    if (e.targetTouches.length === 2 && lastTouchDistance.current !== null) {
+      const distance = Math.hypot(
+        e.targetTouches[0].clientX - e.targetTouches[1].clientX,
+        e.targetTouches[0].clientY - e.targetTouches[1].clientY
+      );
+      
+      const delta = distance - lastTouchDistance.current;
+      if (Math.abs(delta) > 5) {
+        setScale(s => {
+          const newScale = s + delta * 0.005;
+          return Math.min(Math.max(0.5, newScale), 3);
+        });
+        lastTouchDistance.current = distance;
+      }
+    }
   };
 
   const onTouchEnd = () => {
-    if (!touchStartX.current || !touchEndX.current || !touchStartY.current || !touchEndY.current) return;
-    
-    const distanceX = touchStartX.current - touchEndX.current;
-    const distanceY = touchStartY.current - touchEndY.current;
-    
-    // Only trigger swipe if horizontal swipe is greater than vertical swipe (avoid triggering on vertical scroll)
-    if (Math.abs(distanceX) > Math.abs(distanceY) && Math.abs(distanceX) > minSwipeDistance) {
-      if (distanceX > minSwipeDistance && pageNumber < numPages) {
-        setPageNumber(p => p + 1);
-      } else if (distanceX < -minSwipeDistance && pageNumber > 1) {
-        setPageNumber(p => p - 1);
-      }
-    }
-    
-    // reset values
-    touchStartX.current = null;
-    touchStartY.current = null;
-    touchEndX.current = null;
-    touchEndY.current = null;
+    lastTouchDistance.current = null;
   };
 
   const onWheel = (e: React.WheelEvent) => {
-    // Only trigger for significant horizontal trackpad swipes
-    if (Math.abs(e.deltaX) > 40 && Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
-      const now = Date.now();
-      // Debounce trackpad swipe (1 second cooldown)
-      if (now - lastWheelTime.current > 1000) {
-        if (e.deltaX > 0 && pageNumber < numPages) {
-          setPageNumber(p => p + 1);
-          lastWheelTime.current = now;
-        } else if (e.deltaX < 0 && pageNumber > 1) {
-          setPageNumber(p => p - 1);
-          lastWheelTime.current = now;
-        }
-      }
-    }
+    // Horizontal swipe logic removed to prevent accidental page changes
   };
 
   if (!file) {
@@ -197,14 +179,14 @@ export default function ReaderPage() {
           <button onClick={() => setFile(null)} className="p-2 hover:bg-white/10 rounded-lg transition-colors" title="Close PDF">
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <span className="font-medium text-sm truncate max-w-[150px] md:max-w-xs" title={file.name}>
+          <span className="font-medium text-sm truncate max-w-[80px] md:max-w-xs" title={file.name}>
             {file.name}
           </span>
         </div>
 
         <div className="flex items-center gap-2">
           {/* Zoom Controls */}
-          <div className="hidden md:flex items-center gap-1 bg-white/5 rounded-lg p-1">
+          <div className="flex items-center gap-1 bg-white/5 rounded-lg p-1">
             <button 
               onClick={() => setScale(s => Math.max(0.5, s - 0.1))}
               className="p-1.5 hover:bg-white/10 rounded-md transition-colors"
@@ -261,7 +243,7 @@ export default function ReaderPage() {
 
       {/* PDF Viewer Area */}
       <div 
-        className="flex-1 overflow-auto bg-black/10 relative pdf-canvas-wrapper p-4 md:p-8"
+        className="flex-1 overflow-auto bg-black/10 relative pdf-canvas-wrapper p-4 md:p-8 touch-pan-y overscroll-none"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
@@ -290,6 +272,24 @@ export default function ReaderPage() {
             </div>
           </Document>
         </div>
+      </div>
+
+      {/* Mobile Floating Zoom Controls */}
+      <div className="md:hidden fixed bottom-24 right-4 flex flex-col gap-3 z-20">
+        <button 
+          onClick={() => setScale(s => Math.min(3, s + 0.2))}
+          className="p-3 bg-white/10 backdrop-blur-lg border border-white/20 text-white rounded-full shadow-2xl active:scale-95 transition-all"
+          title="Zoom In"
+        >
+          <ZoomIn className="w-6 h-6" />
+        </button>
+        <button 
+          onClick={() => setScale(s => Math.max(0.5, s - 0.2))}
+          className="p-3 bg-white/10 backdrop-blur-lg border border-white/20 text-white rounded-full shadow-2xl active:scale-95 transition-all"
+          title="Zoom Out"
+        >
+          <ZoomOut className="w-6 h-6" />
+        </button>
       </div>
 
       {/* Bottom Navigation */}
