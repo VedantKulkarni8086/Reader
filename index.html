@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lumina Reader</title>
+  </head>
+  <body>
+    <div id="root"><p style="color:#888;text-align:center;margin-top:40vh;font-family:sans-serif">Loading...</p></div>
+    <script>
+      window.addEventListener('error', function(e) {
+        document.getElementById('root').innerHTML = '<pre style="color:red;padding:2em;font-family:monospace">' + e.message + '\n' + (e.filename || '') + ':' + (e.lineno || '') + '</pre>';
+      });
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
