@@ -29,7 +29,6 @@ export default function ReaderPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const themeMenuRef = useRef<HTMLDivElement>(null);
   const lastTouchDistance = useRef<number | null>(null);
-  const lastWheelTime = useRef<number>(0);
   const { theme, setTheme } = useTheme();
 
   // Close theme menu when clicking outside
@@ -124,9 +123,6 @@ export default function ReaderPage() {
     lastTouchDistance.current = null;
   };
 
-  const onWheel = (e: React.WheelEvent) => {
-    // Horizontal swipe logic removed to prevent accidental page changes
-  };
 
   if (!file) {
     return (
@@ -247,7 +243,6 @@ export default function ReaderPage() {
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
-        onWheel={onWheel}
       >
         <div className="w-full h-full flex min-h-max min-w-max items-center justify-center">
           <Document
