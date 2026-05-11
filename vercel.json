@@ -1,10 +1,6 @@
 {
   "framework": "vite",
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/index.html",
-      "methods": ["GET", "HEAD", "POST", "OPTIONS"]
-    }
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
-} 
+}
