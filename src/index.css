@@ -1,5 +1,5 @@
 @import "tailwindcss";
-
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Inter:wght@400;500;600&family=Lexend:wght@400;500&display=swap');
 :root {
   /* Default Theme: Anthropic Dark */
   --background: #18181b;
@@ -9,7 +9,7 @@
 
 [data-theme="light"] {
   --background: #ffffff;
-  --foreground: #18181b;
+  --foreground: #000000;
   --pdf-filter: none;
 }
 
@@ -58,9 +58,15 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-fg-hover: color-mix(in srgb, var(--foreground) 8%, transparent);
+  --color-fg-active: color-mix(in srgb, var(--foreground) 15%, transparent);
+  --color-fg-border: color-mix(in srgb, var(--foreground) 15%, transparent);
+  --color-fg-border-light: color-mix(in srgb, var(--foreground) 5%, transparent);
   --font-sans: "Inter", system-ui, sans-serif;
-  --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-serif: "Lora", ui-serif, Georgia, serif;
+  --font-dyslexic: "Lexend", "Comic Sans MS", cursive;
 }
+
 
 body {
   background: var(--background);
@@ -78,4 +84,29 @@ body {
   filter: var(--pdf-filter);
   transition: filter 0.3s ease;
 }
- 
+
+/* Text Reader Mode Styles */
+.reader-text-content {
+  line-height: 1.6;
+  text-align: left;
+}
+
+.reader-text-content p {
+  margin-bottom: 1.2em;
+  text-indent: 0;
+}
+
+/* Layout Modes */
+.layout-two-columns {
+  column-count: 2;
+  column-gap: 4rem;
+  column-rule: 1px solid rgba(150, 150, 150, 0.1);
+}
+
+@media (max-width: 768px) {
+  .layout-two-columns {
+    column-count: 1;
+    column-gap: 0;
+  }
+}
+
